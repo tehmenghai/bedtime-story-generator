@@ -1,7 +1,7 @@
-// Replace this with your Render service URL after deploying the backend, e.g.
-//   const BACKEND_URL = "https://bedtime-story-api.onrender.com";
-// For local development: keep "http://localhost:8000" and run uvicorn locally.
-const BACKEND_URL = "https://bedtime-story-api-jc6z.onrender.com";
+// Auto-detect backend URL: use localhost for local development, and the Render URL in production
+const BACKEND_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:8000"
+    : "https://bedtime-story-api-jc6z.onrender.com";
 
 function escapeHtml(s) {
     return s.replace(/[&<>"']/g, c => ({

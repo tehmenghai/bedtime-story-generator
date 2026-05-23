@@ -1,0 +1,24 @@
+# Declarative Render config for the Bedtime Story Generator backend.
+# Render reads this to provision the web service + managed Postgres in one go.
+# The DATABASE_URL is wired from the database to the service automatically;
+# GEMINI_API_KEY is set manually in the Render dashboard (sync: false keeps
+# it out of source control).
+
+services:
+  - type: web
+    name: bedtime-story-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bedtime-story-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false   # set in the Render dashboard; never committed
+
+databases:
+  - name: bedtime-story-db
+    plan: free        # Free tier: expires 30 days after creation, then 14-day grace period before deletion. Upgrade or migrate for longer-running cohorts.

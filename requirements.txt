@@ -1,0 +1,11 @@
+# Pinned dependencies for the Bedtime Story Generator (V1 final state).
+# Module 7 splits the frontend out to Vercel (static); the backend is now
+# JSON-only so jinja2 (HTML templating) is no longer needed.
+# Discipline: every `pip install <pkg>` must be preceded by adding the
+# pinned line here, then `pip install -r requirements.txt`.
+
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+psycopg[binary]==3.2.*
+python-dotenv==1.0.*
+google-genai>=1.0.0

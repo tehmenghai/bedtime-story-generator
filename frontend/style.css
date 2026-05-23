@@ -1,0 +1,172 @@
+/* Bedtime Story Generator — Module 5 stylesheet.
+   Two-column layout for desktop/tablet, single-column for phones.
+   Form pane: native sans-serif, compact controls.
+   Story pane: serif body, generous line-height, calm visual treatment. */
+
+:root {
+    --bg: #fbfaf6;
+    --ink: #1f1d1a;
+    --muted: #6b665f;
+    --accent: #4a3d2f;
+    --story-bg: #fffdf6;
+    --story-border: #ebe4d3;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+}
+
+header {
+    padding: 1.5rem 2rem 0;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.01em;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 2rem;
+    padding: 1.5rem 2rem 2.5rem;
+    align-items: start;
+}
+
+.form-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: opacity 0.4s ease;
+}
+
+.form-pane .hint {
+    margin: 0 0 0.25rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.form-pane label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.form-pane input {
+    font: inherit;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #d6d0c1;
+    border-radius: 0.4rem;
+    background: #fff;
+    color: var(--ink);
+}
+
+.form-pane input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+}
+
+.form-pane button {
+    margin-top: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0.4rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.form-pane button:hover { background: #2f2519; }
+
+.error {
+    margin: 0.5rem 0 0;
+    color: #a8362c;
+    font-size: 0.9rem;
+    min-height: 1.2em;
+}
+
+.story-pane {
+    background: var(--story-bg);
+    border: 2px solid var(--story-border);
+    border-radius: 0.6rem;
+    padding: 2rem 2.25rem;
+    min-height: 22rem;
+}
+
+#story-output {
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 1.2rem;
+    line-height: 1.75;
+    color: var(--ink);
+    max-width: 38ch;
+    margin: 0 auto;
+}
+
+#story-output p { margin: 0 0 1rem; }
+#story-output p:last-child { margin-bottom: 0; }
+
+#story-output .placeholder {
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 6rem;
+}
+
+/* When a story is being read, dim the form pane so the story is the focus.
+   Hovering or focusing the form brings it back to full opacity. */
+body.story-active .form-pane { opacity: 0.6; }
+body.story-active .form-pane:hover,
+body.story-active .form-pane:focus-within { opacity: 1; }
+
+/* Module 6 — Past stories panel inside the form-pane. */
+.recent-stories {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5dfd1;
+}
+.recent-stories h2 {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+#recent-list { list-style: none; padding: 0; margin: 0; }
+#recent-list li { margin-bottom: 0.4rem; }
+.recent-item {
+    background: none;
+    border: none;
+    padding: 0.4rem 0.5rem;
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+    border-radius: 0.3rem;
+    font: inherit;
+    color: var(--ink);
+}
+.recent-item:hover { background: #f0ead8; }
+.recent-plot { display: block; font-size: 0.95rem; }
+.recent-date { display: block; font-size: 0.8rem; color: var(--muted); }
+
+/* Phone — stack the panes. */
+@media (max-width: 700px) {
+    .layout {
+        grid-template-columns: 1fr;
+        padding: 1rem 1rem 2rem;
+        gap: 1.25rem;
+    }
+    .story-pane { padding: 1.5rem 1.25rem; min-height: 16rem; }
+    #story-output { font-size: 1.1rem; }
+}

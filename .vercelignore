@@ -1,0 +1,15 @@
+# Hide everything except the static frontend from Vercel.
+# Same reasoning as the master-root .vercelignore — see that file for details.
+
+app/
+sql/
+requirements.txt
+Procfile
+render.yaml
+README.md
+.env.example
+scripts/
+venv/
+__pycache__/
+.pytest_cache/
+.DS_Store

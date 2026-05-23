@@ -37,11 +37,20 @@ def save_story(req: StoryRequest, body: str) -> int:
 def fetch_recent_stories(child_name: str, limit: int = 5) -> list[StoredStory]:
     with get_conn() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                "SELECT id, child_name, characters, setting, plot, body, model_name, "
-                "       to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at "
-                "FROM stories WHERE child_name = %s "
-                "ORDER BY created_at DESC LIMIT %s",
-                (child_name.strip(), limit),
-            )
+            if child_name.strip():
+                cur.execute(
+                    "SELECT id, child_name, characters, setting, plot, body, model_name, "
+                    "       to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at "
+                    "FROM stories WHERE child_name = %s "
+                    "ORDER BY created_at DESC LIMIT %s",
+                    (child_name.strip(), limit),
+                )
+            else:
+                cur.execute(
+                    "SELECT id, child_name, characters, setting, plot, body, model_name, "
+                    "       to_char(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at "
+                    "FROM stories "
+                    "ORDER BY created_at DESC LIMIT %s",
+                    (limit,),
+                )
             return [StoredStory(**row) for row in cur.fetchall()]

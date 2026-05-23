@@ -184,7 +184,8 @@ async function loadRecentStories() {
     const name = document.getElementById("child_name").value.trim();
     const aside = document.getElementById("recent-stories");
     const list = document.getElementById("recent-list");
-    if (!name) { aside.hidden = true; return; }
+    
+    // Instead of hiding when empty, we fetch the global recent stories!
     try {
         const r = await fetch(`${BACKEND_URL}/stories?child_name=${encodeURIComponent(name)}`);
         if (!r.ok) { aside.hidden = true; return; }
@@ -215,7 +216,7 @@ async function loadRecentStories() {
             }
 
             return `<li>
-                <button type="button" class="recent-item-card" data-body="${escapeHtml(it.body)}" data-mood="${mood}">
+                <button type="button" class="recent-item-card" data-body="${escapeHtml(it.body)}" data-mood="${mood}" data-child-name="${escapeHtml(it.child_name)}">
                     <div class="recent-card-icon">${getMoodEmoji(mood)}</div>
                     <div class="recent-card-info">
                         <span class="recent-card-name">${escapeHtml(it.child_name)}'s Story</span>
@@ -232,7 +233,8 @@ async function loadRecentStories() {
                 btn.classList.add("active");
                 
                 const mood = btn.dataset.mood;
-                renderStory(btn.dataset.body, name, mood, "Long");
+                const childName = btn.dataset.childName;
+                renderStory(btn.dataset.body, childName, mood, "Long");
             });
         });
         aside.hidden = false;
@@ -344,3 +346,6 @@ function stopSpeaking() {
     isSpeaking = false;
     currentUtterance = null;
 }
+
+// Load global story history immediately on page load
+loadRecentStories();

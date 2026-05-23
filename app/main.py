@@ -39,8 +39,6 @@ def story(payload: StoryRequest):
 
 @app.get("/stories", response_model=list[StoredStory])
 def stories(child_name: str):
-    if not child_name.strip():
-        raise HTTPException(status_code=400, detail="child_name query parameter is required.")
     return fetch_recent_stories(child_name)
 
 

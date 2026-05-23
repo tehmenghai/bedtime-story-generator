@@ -4,47 +4,148 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bedtime Story Generator</title>
+    <!-- Premium Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <header><h1>Bedtime Story Generator</h1></header>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>STORY SETUP</h2>
+                <p>Tell us about the story you'd like tonight.</p>
+            </div>
 
-    <main class="layout">
-        <section class="form-pane" aria-label="Story details">
-            <p class="hint">Tell us about the story you'd like to read tonight.</p>
-            <form id="story-form">
-                <label>
-                    Child's name
-                    <input name="child_name" required placeholder="Aisha">
-                </label>
-                <label>
-                    Characters
-                    <input name="characters" placeholder="an owl and a fox">
-                </label>
-                <label>
-                    Setting
-                    <input name="setting" placeholder="an enchanted forest">
-                </label>
-                <label>
-                    Plot
-                    <input name="plot" required placeholder="looking for the moon">
-                </label>
-                <button id="generate-btn" type="button">Generate story</button>
+            <form id="story-form" autocomplete="off">
+                <div class="input-group">
+                    <label for="child_name">Child's name</label>
+                    <input type="text" id="child_name" name="child_name" required placeholder="Aisha">
+                </div>
+
+                <div class="input-group">
+                    <div class="label-wrapper">
+                        <label for="characters">Characters</label>
+                        <span class="optional-tag">optional</span>
+                    </div>
+                    <input type="text" id="characters" name="characters" placeholder="an owl and a fox">
+                </div>
+
+                <div class="input-group">
+                    <div class="label-wrapper">
+                        <label for="setting">Setting</label>
+                        <span class="optional-tag">optional</span>
+                    </div>
+                    <input type="text" id="setting" name="setting" placeholder="an enchanted forest">
+                </div>
+
+                <div class="input-group">
+                    <div class="label-wrapper">
+                        <label for="plot">Plot</label>
+                        <span class="optional-tag">optional</span>
+                    </div>
+                    <textarea id="plot" name="plot" placeholder="looking for the moon" rows="3"></textarea>
+                </div>
+
+                <!-- Mood Selection Group -->
+                <div class="input-group">
+                    <label>Mood</label>
+                    <div class="mood-chips">
+                        <button type="button" class="mood-chip active" data-mood="Magical">✨ Magical</button>
+                        <button type="button" class="mood-chip" data-mood="Dreamy">🌙 Dreamy</button>
+                        <button type="button" class="mood-chip" data-mood="Adventure">🐾 Adventure</button>
+                        <button type="button" class="mood-chip" data-mood="Funny">😄 Funny</button>
+                        <button type="button" class="mood-chip" data-mood="Calm">🌊 Calm</button>
+                    </div>
+                </div>
+
+                <!-- Length Group -->
+                <div class="input-group">
+                    <label>Length</label>
+                    <div class="length-segmented">
+                        <button type="button" class="length-btn" data-length="Short">Short</button>
+                        <button type="button" class="length-btn" data-length="Medium">Medium</button>
+                        <button type="button" class="length-btn active" data-length="Long">Long</button>
+                    </div>
+                </div>
+
+                <button id="generate-btn" type="button" class="generate-button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Generate story
+                </button>
             </form>
+
             <p id="error" class="error" role="alert"></p>
 
-            <aside id="recent-stories" class="recent-stories" hidden>
-                <h2>Past stories</h2>
+            <!-- Recent Stories Section -->
+            <div id="recent-stories" class="recent-section" hidden>
+                <h2>RECENT</h2>
                 <ul id="recent-list"></ul>
-            </aside>
-        </section>
-
-        <section class="story-pane" aria-label="Story" aria-live="polite">
-            <div id="story-output" class="story-empty">
-                <p class="placeholder">Your story will appear here.</p>
             </div>
-        </section>
-    </main>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-panel">
+            <header class="navbar">
+                <div class="logo-wrapper">
+                    <!-- Moon icon -->
+                    <span class="logo-icon">🌙</span>
+                    <span class="logo-text">Story <span class="logo-light">generator</span></span>
+                    <span class="status-dot"></span>
+                </div>
+                <div class="nav-actions">
+                    <!-- Light/Dark Toggle -->
+                    <button id="theme-toggle" class="nav-btn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
+                        <!-- Sun Icon -->
+                        <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <!-- Moon Icon -->
+                        <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                    <!-- Audio Speak Toggle -->
+                    <button id="speak-toggle" class="nav-btn" title="Read Aloud" aria-label="Read Aloud" style="display: none;">
+                        <!-- Speaker Icon -->
+                        <svg class="speaker-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                        <!-- Stop Speaker Icon -->
+                        <svg class="mute-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                    </button>
+                    <!-- New Story Button -->
+                    <button id="new-story-btn" class="outline-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        New story
+                    </button>
+                </div>
+            </header>
+
+            <div class="main-content-scroll">
+                <!-- Empty Placeholder State -->
+                <div id="story-placeholder" class="empty-state">
+                    <div class="moon-box">
+                        <span class="placeholder-emoji">🌙</span>
+                    </div>
+                    <h1>Your story will appear here</h1>
+                    <p>Fill in the details on the left, then click <strong>Generate story</strong> to create a personalised bedtime story.</p>
+                    <div class="emoji-deco">
+                        <span class="deco-circle">✨</span>
+                        <span class="deco-circle">🌙</span>
+                        <span class="deco-circle">🦉</span>
+                        <span class="deco-circle">🦊</span>
+                        <span class="deco-circle">⭐</span>
+                    </div>
+                </div>
+
+                <!-- Story Active State Container -->
+                <div id="story-container" class="story-container" style="display: none;">
+                    <div class="story-meta-header">
+                        <h3 id="story-meta-title">Aisha's Magical Bedtime Story</h3>
+                        <p id="story-meta-subtitle">✨ Magical · just now</p>
+                    </div>
+                    <article id="story-output" class="story-body-content"></article>
+                </div>
+            </div>
+        </main>
+    </div>
 
     <script src="/script.js"></script>
 </body>

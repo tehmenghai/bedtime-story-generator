@@ -201,10 +201,18 @@ async function loadRecentStories() {
                 displayPlot = it.plot.replace(/\s*\(Mood:\s*[A-Za-z]+,\s*Length:\s*[A-Za-z]+\)/, "");
             }
             
-            // Format nice human-readable relative time or fallback to date
-            const dateStr = new Date(it.created_at).toLocaleDateString(undefined, {
-                month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'
-            });
+            // Format nice human-readable relative time or fallback to date (Safari-safe replace)
+            let dateStr = it.created_at;
+            try {
+                const parsedDate = new Date(it.created_at.replace(" ", "T"));
+                if (!isNaN(parsedDate.getTime())) {
+                    dateStr = parsedDate.toLocaleDateString(undefined, {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                }
+            } catch (err) {
+                console.error("Error parsing date:", err);
+            }
 
             return `<li>
                 <button type="button" class="recent-item-card" data-body="${escapeHtml(it.body)}" data-mood="${mood}">
@@ -228,10 +236,14 @@ async function loadRecentStories() {
             });
         });
         aside.hidden = false;
-    } catch (e) { aside.hidden = true; }
+    } catch (e) { 
+        console.error("Error loading recent stories:", e);
+        aside.hidden = true; 
+    }
 }
 
 document.getElementById("child_name").addEventListener("blur", loadRecentStories);
+document.getElementById("child_name").addEventListener("change", loadRecentStories);
 
 // ----------------------------------------------------
 // UI Navigation / Theme Controls

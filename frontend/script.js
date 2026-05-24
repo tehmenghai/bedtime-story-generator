@@ -26,9 +26,289 @@ function getMoodEmoji(mood) {
     return moods[mood] || "📖";
 }
 
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
+// Stories Drawer State
+// ────────────────────────────────────────────────────────────────
+
+let drawerStories = [];    // Full list of stories from the backend
+let activeStoryId = null;  // Currently displayed story ID
+let drawerOpen = false;    // Whether the drawer is visible
+
+// Compute a relative time string from a date string
+function relativeTime(dateStr) {
+    try {
+        const d = new Date(dateStr.replace(" ", "T"));
+        if (isNaN(d.getTime())) return dateStr;
+        const diffMs = Date.now() - d.getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return "just now";
+        if (diffMin < 60) return `${diffMin}m ago`;
+        const diffH = Math.floor(diffMin / 60);
+        if (diffH < 24) return `${diffH}h ago`;
+        const diffD = Math.floor(diffH / 24);
+        return `${diffD}d ago`;
+    } catch {
+        return dateStr;
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Drawer Rendering
+// ────────────────────────────────────────────────────────────────
+
+function updateBadge() {
+    const badge = document.getElementById("stories-count-badge");
+    if (badge) badge.textContent = drawerStories.length;
+
+    const subtitle = document.getElementById("drawer-subtitle");
+    if (subtitle) subtitle.textContent = `${drawerStories.length} stor${drawerStories.length === 1 ? "y" : "ies"}`;
+}
+
+function renderDrawerCards(filtered) {
+    const list = document.getElementById("drawer-list");
+    const emptyEl = document.getElementById("drawer-empty");
+    const emptyMsg = document.getElementById("drawer-empty-msg");
+    const searchVal = document.getElementById("drawer-search").value.trim();
+
+    if (filtered.length === 0) {
+        list.innerHTML = "";
+        emptyEl.removeAttribute("hidden");
+        if (searchVal) {
+            emptyMsg.textContent = `No stories match "${searchVal}"`;
+        } else {
+            emptyMsg.textContent = "No saved stories yet. Generate your first one!";
+        }
+        return;
+    }
+
+    emptyEl.setAttribute("hidden", "");
+    list.innerHTML = filtered.map(story => buildCardHTML(story)).join("");
+
+    // Wire up card click handlers
+    list.querySelectorAll(".drawer-card").forEach(card => {
+        card.addEventListener("click", () => {
+            const sid = card.dataset.sid;
+            const story = drawerStories.find(s => String(s.id) === sid);
+            if (!story || card.dataset.confirming === "true") return;
+            setActiveStory(story);
+        });
+    });
+
+    // Wire up trash buttons
+    list.querySelectorAll(".drawer-card-delete").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const card = btn.closest(".drawer-card");
+            showDeleteConfirm(card);
+        });
+    });
+}
+
+function buildCardHTML(story) {
+    const emoji = getMoodEmoji(story.mood);
+    const isActive = String(story.id) === String(activeStoryId);
+    const settingLine = story.setting
+        ? `<span class="drawer-card-setting">${escapeHtml(story.setting)}</span>`
+        : "";
+
+    return `
+    <li>
+      <button class="drawer-card${isActive ? " active" : ""}"
+              data-sid="${story.id}"
+              data-confirming="false"
+              type="button">
+        <span class="drawer-card-avatar">${emoji}</span>
+        <span class="drawer-card-body">
+          <span class="drawer-card-title">${escapeHtml(story.name)}'s story</span>
+          <span class="drawer-card-meta">${escapeHtml(story.mood || "Story")} · ${escapeHtml(story.time || "")}</span>
+          ${settingLine}
+        </span>
+        <button class="drawer-card-delete" type="button" title="Delete story" aria-label="Delete story">🗑</button>
+      </button>
+    </li>`;
+}
+
+function showDeleteConfirm(card) {
+    card.dataset.confirming = "true";
+    const deleteBtn = card.querySelector(".drawer-card-delete");
+    if (!deleteBtn) return;
+
+    // Replace the trash icon with Delete / Cancel row
+    deleteBtn.style.display = "none";
+
+    const confirmEl = document.createElement("span");
+    confirmEl.className = "drawer-card-confirm";
+    confirmEl.innerHTML = `
+        <button class="confirm-delete-btn" type="button">Delete</button>
+        <button class="confirm-cancel-btn" type="button">Cancel</button>
+    `;
+    card.appendChild(confirmEl);
+
+    confirmEl.querySelector(".confirm-delete-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const sid = card.dataset.sid;
+        deleteStory(sid);
+    });
+
+    confirmEl.querySelector(".confirm-cancel-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        // Restore trash icon
+        card.dataset.confirming = "false";
+        confirmEl.remove();
+        deleteBtn.style.display = "";
+    });
+}
+
+function deleteStory(sid) {
+    drawerStories = drawerStories.filter(s => String(s.id) !== String(sid));
+    if (String(activeStoryId) === String(sid)) {
+        activeStoryId = null;
+        showEmpty();
+    }
+    updateBadge();
+    applySearch();
+}
+
+function applySearch() {
+    const q = document.getElementById("drawer-search").value.trim().toLowerCase();
+    const filtered = q
+        ? drawerStories.filter(s =>
+            (s.name || "").toLowerCase().includes(q) ||
+            (s.mood || "").toLowerCase().includes(q) ||
+            (s.setting || "").toLowerCase().includes(q)
+          )
+        : drawerStories;
+    renderDrawerCards(filtered);
+}
+
+function setActiveStory(story) {
+    activeStoryId = story.id;
+
+    // Parse mood/length from the stored plot string (for DB stories)
+    let mood = story.mood || "Magical";
+    let storyBody = story.body || "";
+    let length = story.length || "Long";
+
+    renderStory(storyBody, story.name, mood, length);
+    applySearch();  // Re-render cards to update active state
+}
+
+// ────────────────────────────────────────────────────────────────
+// Drawer Toggle
+// ────────────────────────────────────────────────────────────────
+
+function openDrawer() {
+    drawerOpen = true;
+    const drawer = document.getElementById("stories-drawer");
+    const container = document.querySelector(".app-container");
+    const toggleBtn = document.getElementById("stories-toggle-btn");
+
+    drawer.removeAttribute("hidden");
+    container.classList.add("drawer-open");
+    toggleBtn.classList.add("active");
+
+    // Auto-focus search
+    setTimeout(() => {
+        const search = document.getElementById("drawer-search");
+        if (search) search.focus();
+    }, 80);
+}
+
+function closeDrawer() {
+    drawerOpen = false;
+    const drawer = document.getElementById("stories-drawer");
+    const container = document.querySelector(".app-container");
+    const toggleBtn = document.getElementById("stories-toggle-btn");
+
+    drawer.setAttribute("hidden", "");
+    container.classList.remove("drawer-open");
+    toggleBtn.classList.remove("active");
+}
+
+document.getElementById("stories-toggle-btn").addEventListener("click", () => {
+    if (drawerOpen) {
+        closeDrawer();
+    } else {
+        openDrawer();
+    }
+});
+
+// ────────────────────────────────────────────────────────────────
+// Search Wiring
+// ────────────────────────────────────────────────────────────────
+
+const searchInput = document.getElementById("drawer-search");
+const searchClear = document.getElementById("drawer-search-clear");
+
+searchInput.addEventListener("input", () => {
+    const hasValue = searchInput.value.length > 0;
+    if (hasValue) {
+        searchClear.removeAttribute("hidden");
+    } else {
+        searchClear.setAttribute("hidden", "");
+    }
+    applySearch();
+});
+
+searchClear.addEventListener("click", () => {
+    searchInput.value = "";
+    searchClear.setAttribute("hidden", "");
+    searchInput.focus();
+    applySearch();
+});
+
+// Esc: clear search if non-empty, close drawer if search already empty
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        if (drawerOpen) {
+            if (searchInput.value) {
+                searchInput.value = "";
+                searchClear.setAttribute("hidden", "");
+                applySearch();
+            } else {
+                closeDrawer();
+            }
+        }
+    }
+});
+
+// ────────────────────────────────────────────────────────────────
+// Load Stories from Backend
+// ────────────────────────────────────────────────────────────────
+
+async function loadDrawerStories() {
+    try {
+        const r = await fetch(`${BACKEND_URL}/stories?child_name=`);
+        if (!r.ok) return;
+        const items = await r.json();
+
+        drawerStories = items.map(it => {
+            let mood = "Magical";
+            let displaySetting = it.setting || "";
+            const moodMatch = (it.plot || "").match(/\(Mood:\s*([A-Za-z]+)/);
+            if (moodMatch) mood = moodMatch[1];
+
+            return {
+                id: it.id,
+                name: it.child_name,
+                mood: mood,
+                time: relativeTime(it.created_at),
+                setting: displaySetting,
+                characters: it.characters,
+                body: it.body,
+            };
+        });
+
+        updateBadge();
+        applySearch();
+    } catch (e) {
+        console.error("Failed to load stories:", e);
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
 // UI State Controls
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 
 function renderStory(text, childName, mood, length) {
     stopSpeaking(); // Stop any active speech first
@@ -104,9 +384,9 @@ function showEmpty() {
     `;
 }
 
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 // Form Interactive Chip Selectors (Mood & Length)
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 
 // Mood Selection Chips
 document.querySelectorAll(".mood-chip").forEach(chip => {
@@ -124,9 +404,9 @@ document.querySelectorAll(".length-btn").forEach(btn => {
     });
 });
 
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 // Generate Story Button Handler
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 
 document.getElementById("generate-btn").addEventListener("click", async () => {
     const form = document.getElementById("story-form");
@@ -148,14 +428,17 @@ document.getElementById("generate-btn").addEventListener("click", async () => {
     const activeLengthBtn = document.querySelector(".length-btn.active");
     const length = activeLengthBtn ? activeLengthBtn.dataset.length : "Long";
 
+    const settingVal = form.setting.value.trim() || "a cozy dreamland";
+    const charactersVal = form.characters.value.trim() || "friendly creatures";
+
     // Compose plot with custom instructions for the LLM
     let rawPlot = form.plot.value.trim() || "going on a magical adventure and learning a sweet lesson";
     let finalPlot = `${rawPlot} (Mood: ${mood}, Length: ${length})`;
 
     const payload = {
         child_name: childName,
-        characters: form.characters.value.trim() || "friendly creatures",
-        setting: form.setting.value.trim() || "a cozy dreamland",
+        characters: charactersVal,
+        setting: settingVal,
         plot: finalPlot,
     };
 
@@ -168,88 +451,26 @@ document.getElementById("generate-btn").addEventListener("click", async () => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.detail || "Request failed");
         
+        // Reload drawer from backend to get the newly saved story (with real ID)
+        await loadDrawerStories();
+
+        // Set the newest story (first in list) as active
+        if (drawerStories.length > 0) {
+            activeStoryId = drawerStories[0].id;
+            applySearch(); // Refresh active styling
+        }
+
         renderStory(data.story, childName, mood, length);
-        loadRecentStories();
+
     } catch (e) {
         showEmpty();
         errEl.textContent = e.message;
     }
 });
 
-// ----------------------------------------------------
-// Recent Stories Loader (Postgres library Integration)
-// ----------------------------------------------------
-
-async function loadRecentStories() {
-    const name = document.getElementById("child_name").value.trim();
-    const aside = document.getElementById("recent-stories");
-    const list = document.getElementById("recent-list");
-    
-    // Instead of hiding when empty, we fetch the global recent stories!
-    try {
-        const r = await fetch(`${BACKEND_URL}/stories?child_name=${encodeURIComponent(name)}`);
-        if (!r.ok) { aside.hidden = true; return; }
-        const items = await r.json();
-        if (items.length === 0) { aside.hidden = true; return; }
-        
-        list.innerHTML = items.map(it => {
-            // Attempt to parse mood/length from database plot string
-            let mood = "Magical";
-            let displayPlot = it.plot;
-            const moodMatch = it.plot.match(/\(Mood:\s*([A-Za-z]+)/);
-            if (moodMatch) {
-                mood = moodMatch[1];
-                displayPlot = it.plot.replace(/\s*\(Mood:\s*[A-Za-z]+,\s*Length:\s*[A-Za-z]+\)/, "");
-            }
-            
-            // Format nice human-readable relative time or fallback to date (Safari-safe replace)
-            let dateStr = it.created_at;
-            try {
-                const parsedDate = new Date(it.created_at.replace(" ", "T"));
-                if (!isNaN(parsedDate.getTime())) {
-                    dateStr = parsedDate.toLocaleDateString(undefined, {
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    });
-                }
-            } catch (err) {
-                console.error("Error parsing date:", err);
-            }
-
-            return `<li>
-                <button type="button" class="recent-item-card" data-body="${escapeHtml(it.body)}" data-mood="${mood}" data-child-name="${escapeHtml(it.child_name)}">
-                    <div class="recent-card-icon">${getMoodEmoji(mood)}</div>
-                    <div class="recent-card-info">
-                        <span class="recent-card-name">${escapeHtml(it.child_name)}'s Story</span>
-                        <span class="recent-card-meta">${mood} · ${dateStr}</span>
-                    </div>
-                </button>
-            </li>`;
-        }).join("");
-        
-        // Wire events on card clicks
-        list.querySelectorAll(".recent-item-card").forEach(btn => {
-            btn.addEventListener("click", () => {
-                list.querySelectorAll(".recent-item-card").forEach(c => c.classList.remove("active"));
-                btn.classList.add("active");
-                
-                const mood = btn.dataset.mood;
-                const childName = btn.dataset.childName;
-                renderStory(btn.dataset.body, childName, mood, "Long");
-            });
-        });
-        aside.hidden = false;
-    } catch (e) { 
-        console.error("Error loading recent stories:", e);
-        aside.hidden = true; 
-    }
-}
-
-document.getElementById("child_name").addEventListener("blur", loadRecentStories);
-document.getElementById("child_name").addEventListener("change", loadRecentStories);
-
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 // UI Navigation / Theme Controls
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 
 // New Story Button Reset Form
 document.getElementById("new-story-btn").addEventListener("click", () => {
@@ -259,6 +480,8 @@ document.getElementById("new-story-btn").addEventListener("click", () => {
     document.querySelectorAll(".length-btn").forEach(b => b.classList.remove("active"));
     document.querySelector(".length-btn[data-length='Long']").classList.add("active");
     document.getElementById("error").textContent = "";
+    activeStoryId = null;
+    applySearch();  // Clear active card highlight
     showEmpty();
 });
 
@@ -287,9 +510,9 @@ themeBtn.addEventListener("click", () => {
     }
 });
 
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 // TTS Read Aloud Controller (Web Speech API)
-// ----------------------------------------------------
+// ────────────────────────────────────────────────────────────────
 
 const speakBtn = document.getElementById("speak-toggle");
 const speakIcon = speakBtn.querySelector(".speaker-icon");
@@ -313,7 +536,6 @@ function startSpeaking() {
     
     // Choose a warm, calm, bedtime-friendly voice if available
     const voices = window.speechSynthesis.getVoices();
-    // Prefer high-quality standard voices
     const prefVoices = ["Google US English", "Microsoft Zira", "en-US", "Samantha"];
     let voice = voices.find(v => prefVoices.some(pref => v.name.includes(pref)));
     if (voice) currentUtterance.voice = voice;
@@ -322,13 +544,8 @@ function startSpeaking() {
     currentUtterance.rate = 0.85; 
     currentUtterance.pitch = 1.0;
 
-    currentUtterance.onend = () => {
-        stopSpeaking();
-    };
-
-    currentUtterance.onerror = () => {
-        stopSpeaking();
-    };
+    currentUtterance.onend = () => { stopSpeaking(); };
+    currentUtterance.onerror = () => { stopSpeaking(); };
 
     speakIcon.style.display = "none";
     muteIcon.style.display = "block";
@@ -347,5 +564,8 @@ function stopSpeaking() {
     currentUtterance = null;
 }
 
-// Load global story history immediately on page load
-loadRecentStories();
+// ────────────────────────────────────────────────────────────────
+// Initialise on Page Load
+// ────────────────────────────────────────────────────────────────
+
+loadDrawerStories();

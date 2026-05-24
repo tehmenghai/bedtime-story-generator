@@ -11,10 +11,37 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/style.css?v=20260524-3">
+    <link rel="stylesheet" href="/style.css?v=20260524-4">
 </head>
 <body>
     <div class="app-container">
+        <!-- Stories Drawer (slide-in column) -->
+        <aside id="stories-drawer" class="stories-drawer" hidden>
+            <!-- Drawer Header -->
+            <div class="drawer-header">
+                <div class="drawer-title-row">
+                    <span class="drawer-title">Saved Stories</span>
+                    <span id="drawer-subtitle" class="drawer-subtitle">0 stories</span>
+                </div>
+                <div class="drawer-search-wrapper">
+                    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input id="drawer-search" class="drawer-search-input" type="text" placeholder="Search stories…" autocomplete="off">
+                    <button id="drawer-search-clear" class="drawer-search-clear" hidden>×</button>
+                </div>
+            </div>
+            <!-- Drawer Story List -->
+            <ul id="drawer-list" class="drawer-list"></ul>
+            <!-- Empty Search State -->
+            <div id="drawer-empty" class="drawer-empty" hidden>
+                <span class="drawer-empty-icon">🔍</span>
+                <p id="drawer-empty-msg">No stories match your search.</p>
+            </div>
+            <!-- Drawer Footer -->
+            <div class="drawer-footer">
+                Hover a story and click 🗑 to delete
+            </div>
+        </aside>
+
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -81,24 +108,27 @@
             </form>
 
             <p id="error" class="error" role="alert"></p>
-
-            <!-- Recent Stories Section -->
-            <div id="recent-stories" class="recent-section" hidden>
-                <h2>RECENT</h2>
-                <ul id="recent-list"></ul>
-            </div>
         </aside>
 
         <!-- Main Content Area -->
         <main class="main-panel">
             <header class="navbar">
+                <div class="navbar-left">
                 <div class="logo-wrapper">
                     <!-- Moon icon -->
                     <span class="logo-icon">🌙</span>
                     <span class="logo-text">Story <span class="logo-light">generator</span></span>
                     <span class="status-dot"></span>
                 </div>
-                <div class="nav-actions">
+                <div class="nav-divider"></div>
+                <!-- Stories Drawer Toggle -->
+                <button id="stories-toggle-btn" class="stories-toggle-btn" title="Browse saved stories" aria-label="Toggle Stories Drawer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    Stories
+                    <span id="stories-count-badge" class="stories-count-badge">0</span>
+                </button>
+            </div>
+            <div class="nav-actions">
                     <!-- Light/Dark Toggle -->
                     <button id="theme-toggle" class="nav-btn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
                         <!-- Sun Icon -->
@@ -150,6 +180,6 @@
         </main>
     </div>
 
-    <script src="/script.js?v=20260524-3"></script>
+    <script src="/script.js?v=20260524-4"></script>
 </body>
 </html>

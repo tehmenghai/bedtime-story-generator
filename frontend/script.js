@@ -199,11 +199,9 @@ function setActiveStory(story) {
 
 function openDrawer() {
     drawerOpen = true;
-    const drawer = document.getElementById("stories-drawer");
     const container = document.querySelector(".app-container");
     const toggleBtn = document.getElementById("stories-toggle-btn");
 
-    drawer.removeAttribute("hidden");
     container.classList.add("drawer-open");
     toggleBtn.classList.add("active");
 
@@ -216,11 +214,9 @@ function openDrawer() {
 
 function closeDrawer() {
     drawerOpen = false;
-    const drawer = document.getElementById("stories-drawer");
     const container = document.querySelector(".app-container");
     const toggleBtn = document.getElementById("stories-toggle-btn");
 
-    drawer.setAttribute("hidden", "");
     container.classList.remove("drawer-open");
     toggleBtn.classList.remove("active");
 }

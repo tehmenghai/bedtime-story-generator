@@ -54,6 +54,10 @@ body.dark-theme {
     padding: 0;
 }
 
+/* Ensure HTML `hidden` attribute always hides elements,
+   even when CSS sets display:flex or display:block */
+[hidden] { display: none !important; }
+
 body {
     background: var(--bg-main);
     color: var(--text-primary);

@@ -306,19 +306,19 @@ body {
 }
 
 .stories-drawer {
-    width: 280px;
-    background: var(--bg-sidebar);
-    border-right: 1.5px solid var(--border-color);
-    display: none;                /* hidden by default — toggled by JS class */
+    /* Always stays in the grid — column width (0 or 280px) controls visibility.
+       overflow:hidden on .app-container clips the 0-width column silently. */
+    display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    background: var(--bg-sidebar);
+    border-right: 1.5px solid var(--border-color);
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-/* Only show drawer when container has .drawer-open */
+/* Slide-in animation only fires when drawer becomes visible */
 .app-container.drawer-open .stories-drawer {
-    display: flex;
     animation: drawerSlideIn 0.18s ease;
 }
 
